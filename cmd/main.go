@@ -20,6 +20,7 @@ func main() {
 		panic(err)
 	}
 
+	http.HandleFunc("/pessoas/", route.Pessoas)
 	http.HandleFunc("/pessoas", route.Pessoas)
 
 	slog.Info("Server running on port 80")

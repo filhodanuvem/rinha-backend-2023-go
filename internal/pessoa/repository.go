@@ -3,11 +3,14 @@ package pessoa
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"log/slog"
 
 	"github.com/filhodanuvem/rinha"
+	"github.com/google/uuid"
 	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
@@ -24,8 +27,14 @@ func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
 	`, pessoa.ID, pessoa.Apelido, pessoa.Nome, pessoa.Nascimento, pessoa.Stack)
 
 	if err == nil {
+		j, err := json.Marshal(pessoa)
+		if err != nil {
+			slog.Error(err.Error())
+		}
 		go func() {
-			if _, err := r.Cache.Set(ctx, pessoa.ID.String(), pessoa, 0).Result(); err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if _, err := r.Cache.Set(ctx, pessoa.ID.String(), j, 60*time.Second).Result(); err != nil {
 				slog.Error(err.Error())
 			}
 		}()
@@ -40,10 +49,10 @@ func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
 	return err
 }
 
-func (r *Repository) Find(ctx context.Context, apelido string) (rinha.Pessoa, error) {
+func (r *Repository) FindOne(ctx context.Context, id uuid.UUID) (rinha.Pessoa, error) {
 	var pessoa rinha.Pessoa
 
-	entry, err := r.Cache.Get(ctx, apelido).Result()
+	entry, err := r.Cache.Get(ctx, id.String()).Result()
 	if err != nil {
 		slog.Error(err.Error())
 	}
@@ -60,8 +69,12 @@ func (r *Repository) Find(ctx context.Context, apelido string) (rinha.Pessoa, er
 	err = r.Conn.QueryRow(ctx, `
 		SELECT id, apelido, nome, nascimento, stack
 		FROM pessoas
-		WHERE apelido = $1
-	`, apelido).Scan(&pessoa.ID, &pessoa.Apelido, &pessoa.Nome, &pessoa.Nascimento, &pessoa.Stack)
+		WHERE id = $1
+	`, id).Scan(&pessoa.ID, &pessoa.Apelido, &pessoa.Nome, &pessoa.Nascimento, &pessoa.Stack)
+
+	if err == pgx.ErrNoRows {
+		return pessoa, nil
+	}
 
 	return pessoa, err
 }

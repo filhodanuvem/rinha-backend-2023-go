@@ -11,7 +11,7 @@ func init() {
 }
 
 func envOrFatal(key string) string {
-	value := os.Getenv("DATABASE_URL")
+	value := os.Getenv(key)
 	if value == "" {
 		panic("missing required environment variable " + key)
 	}

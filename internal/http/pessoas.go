@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"log/slog"
 	"net/http"
 	"time"
@@ -26,19 +27,31 @@ func Pessoas(w http.ResponseWriter, r *http.Request) {
 func PostPessoas(w http.ResponseWriter, r *http.Request) {
 	repo := pessoa.Repository{Conn: database.Connection}
 
-	p := rinha.Pessoa{
-		ID:         uuid.New(),
-		Apelido:    "filhodanuvem",
-		Nome:       "Filho da Nuvem",
-		Nascimento: time.Now(),
-		Stack:      []string{"Go", "Python", "JavaScript"},
+	var p rinha.Pessoa
+	err := json.NewDecoder(r.Body).Decode(&p)
+	if err != nil {
+		slog.Error(err.Error())
+		http.Error(w, "expected json body", http.StatusBadRequest)
+		return
 	}
+
+	if p.Apelido == "" ||
+		p.Nome == "" ||
+		p.Nascimento.IsZero() {
+		http.Error(w, "missing required fields", http.StatusBadRequest)
+		return
+	}
+	p.ID = uuid.New()
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 	if err := repo.Create(ctx, p); err != nil {
 		slog.Error(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		if err == rinha.ErrApelidoJaExiste {
+			w.Write([]byte("apelido já existe"))
+		}
+
 		return
 	}
 

@@ -9,7 +9,7 @@ var Client *redis.Client
 
 func Connect() error {
 	Client = redis.NewClient(&redis.Options{
-		Addr: []string{config.RedisURL},
+		Addr: config.CacheURL,
 	})
 
 	return nil

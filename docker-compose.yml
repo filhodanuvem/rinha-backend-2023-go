@@ -12,6 +12,7 @@ services:
       - "80"
     environment:
       DATABASE_URL: postgres://rinha:tw1tt3r@db:5432/rinha
+      CACHE_URL: redis://cache:6379
     deploy:
       resources:
         limits:
@@ -30,6 +31,7 @@ services:
       - "80"
     environment:
       DATABASE_URL: postgres://rinha:tw1tt3r@db:5432/rinha
+      CACHE_URL: redis://cache:6379
     deploy:
       resources:
         limits:

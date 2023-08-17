@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/filhodanuvem/rinha"
@@ -13,6 +14,23 @@ import (
 	"github.com/filhodanuvem/rinha/internal/pessoa"
 	"github.com/google/uuid"
 )
+
+func CountPessoas(w http.ResponseWriter, r *http.Request) {
+	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	count, err := repo.Count(ctx)
+	if err != nil {
+		slog.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	response := strconv.Itoa(count)
+	w.Write([]byte(response))
+}
 
 func Pessoas(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
@@ -77,13 +95,24 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPessoas(w http.ResponseWriter, r *http.Request) {
+	param := r.URL.Path[len("/pessoas/"):]
+	id, _ := uuid.Parse(param)
+
+	if id != uuid.Nil {
+		GetPessoaByID(w, r, id)
+		return
+	}
+
+	GetPessoasByTermo(w, r)
+
+}
+
+func GetPessoaByID(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
 	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	param := r.URL.Path[len("/pessoas/"):]
-	id, err := uuid.Parse(param)
 	pessoa, err := repo.FindOne(ctx, id)
 	if err != nil {
 		slog.Error(err.Error())
@@ -97,6 +126,32 @@ func GetPessoas(w http.ResponseWriter, r *http.Request) {
 	}
 
 	j, err := json.Marshal(pessoa)
+	if err != nil {
+		slog.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(j)
+}
+
+func GetPessoasByTermo(w http.ResponseWriter, r *http.Request) {
+	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	termo := r.URL.Query().Get("termo")
+
+	pessoas, err := repo.FindByTermo(ctx, termo)
+	if err != nil {
+		slog.Error(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	j, err := json.Marshal(pessoas)
 	if err != nil {
 		slog.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

@@ -49,6 +49,17 @@ func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
 	return err
 }
 
+func (r *Repository) Count(ctx context.Context) (int, error) {
+	var count int
+
+	err := r.Conn.QueryRow(ctx, `
+		SELECT COUNT(id)
+		FROM pessoas
+	`).Scan(&count)
+
+	return count, err
+}
+
 func (r *Repository) FindOne(ctx context.Context, id uuid.UUID) (rinha.Pessoa, error) {
 	var pessoa rinha.Pessoa
 
@@ -77,4 +88,31 @@ func (r *Repository) FindOne(ctx context.Context, id uuid.UUID) (rinha.Pessoa, e
 	}
 
 	return pessoa, err
+}
+
+func (r *Repository) FindByTermo(ctx context.Context, termo string) ([]rinha.Pessoa, error) {
+	pessoas := []rinha.Pessoa{}
+
+	rows, err := r.Conn.Query(ctx, `
+		SELECT id, apelido, nome, nascimento, stack
+		FROM pessoas
+		WHERE apelido LIKE '%$1%' OR nome LIKE '%$1%' OR stack LIKE '%$1%'
+	`, termo)
+
+	if err != nil {
+		return pessoas, err
+	}
+
+	for rows.Next() {
+		var pessoa rinha.Pessoa
+		err := rows.Scan(&pessoa.ID, &pessoa.Apelido, &pessoa.Nome, &pessoa.Nascimento, &pessoa.Stack)
+		if err != nil {
+			slog.Error(err.Error())
+			continue
+		}
+
+		pessoas = append(pessoas, pessoa)
+	}
+
+	return pessoas, err
 }

@@ -22,6 +22,7 @@ func main() {
 
 	http.HandleFunc("/pessoas/", route.Pessoas)
 	http.HandleFunc("/pessoas", route.Pessoas)
+	http.HandleFunc("/contagem-pessoas", route.CountPessoas)
 
 	slog.Info("Server running on port 80")
 	http.ListenAndServe(":80", nil)

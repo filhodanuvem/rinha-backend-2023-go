@@ -24,7 +24,7 @@ func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
 	_, err := r.Conn.Exec(ctx, `
 		INSERT INTO pessoas (id, apelido, nome, nascimento, stack)
 		VALUES ($1, $2, $3, $4, $5)
-	`, pessoa.ID, pessoa.Apelido, pessoa.Nome, pessoa.Nascimento, pessoa.Stack)
+	`, pessoa.ID, pessoa.Apelido, pessoa.Nome, pessoa.Nascimento.Format(time.RFC3339), pessoa.Stack)
 
 	if err == nil {
 		j, err := json.Marshal(pessoa)
@@ -77,11 +77,14 @@ func (r *Repository) FindOne(ctx context.Context, id uuid.UUID) (rinha.Pessoa, e
 		slog.Error(err.Error())
 	}
 
+	var nascimento time.Time
 	err = r.Conn.QueryRow(ctx, `
 		SELECT id, apelido, nome, nascimento, stack
 		FROM pessoas
 		WHERE id = $1
-	`, id).Scan(&pessoa.ID, &pessoa.Apelido, &pessoa.Nome, &pessoa.Nascimento, &pessoa.Stack)
+	`, id).Scan(&pessoa.ID, &pessoa.Apelido, &pessoa.Nome, &nascimento, &pessoa.Stack)
+
+	pessoa.Nascimento = rinha.Date{Time: nascimento}
 
 	if err == pgx.ErrNoRows {
 		return pessoa, nil
@@ -96,7 +99,8 @@ func (r *Repository) FindByTermo(ctx context.Context, termo string) ([]rinha.Pes
 	rows, err := r.Conn.Query(ctx, `
 		SELECT id, apelido, nome, nascimento, stack
 		FROM pessoas
-		WHERE apelido LIKE '%$1%' OR nome LIKE '%$1%' OR stack LIKE '%$1%'
+		WHERE apelido LIKE '%' || $1 || '%' OR nome LIKE '%' || $1 || '%'
+		LIMIT 50
 	`, termo)
 
 	if err != nil {
@@ -105,12 +109,14 @@ func (r *Repository) FindByTermo(ctx context.Context, termo string) ([]rinha.Pes
 
 	for rows.Next() {
 		var pessoa rinha.Pessoa
-		err := rows.Scan(&pessoa.ID, &pessoa.Apelido, &pessoa.Nome, &pessoa.Nascimento, &pessoa.Stack)
+		var nascimento time.Time
+		err := rows.Scan(&pessoa.ID, &pessoa.Apelido, &pessoa.Nome, &nascimento, &pessoa.Stack)
 		if err != nil {
 			slog.Error(err.Error())
 			continue
 		}
 
+		pessoa.Nascimento = rinha.Date{Time: nascimento}
 		pessoas = append(pessoas, pessoa)
 	}
 

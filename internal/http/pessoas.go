@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/filhodanuvem/rinha"
@@ -54,7 +55,7 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 	var p rinha.Pessoa
 	err := json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Debug(err.Error())
 		http.Error(w, "expected json body", http.StatusBadRequest)
 		return
 	}
@@ -71,11 +72,12 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 	if err := repo.Create(ctx, p); err != nil {
-		slog.Error(err.Error())
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		if err == rinha.ErrApelidoJaExiste {
 			w.Write([]byte("apelido já existe"))
+			return
 		}
+		slog.Error(err.Error())
 
 		return
 	}
@@ -84,7 +86,7 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 
 	j, err := json.Marshal(p)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Debug(err.Error())
 		w.WriteHeader(http.StatusCreated)
 		return
 	}
@@ -95,23 +97,32 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPessoas(w http.ResponseWriter, r *http.Request) {
-	param := r.URL.Path[len("/pessoas/"):]
-	id, _ := uuid.Parse(param)
+	path := r.URL.Path
+	var id string
+	if strings.Contains(path, "/pessoas/") {
+		id = path[len("/pessoas/"):]
+	}
 
-	if id != uuid.Nil {
+	if id != "" {
 		GetPessoaByID(w, r, id)
 		return
 	}
 
 	GetPessoasByTermo(w, r)
-
 }
 
-func GetPessoaByID(w http.ResponseWriter, r *http.Request, id uuid.UUID) {
+func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
 	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
+
+	id, err := uuid.Parse(param)
+	if err != nil {
+		slog.Debug(err.Error())
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	pessoa, err := repo.FindOne(ctx, id)
 	if err != nil {
@@ -142,18 +153,23 @@ func GetPessoasByTermo(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	termo := r.URL.Query().Get("termo")
+	termo := r.URL.Query().Get("t")
+	if termo == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("missing required query param 't'"))
+		return
+	}
 
 	pessoas, err := repo.FindByTermo(ctx, termo)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error("error when finding by t:" + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	j, err := json.Marshal(pessoas)
 	if err != nil {
-		slog.Error(err.Error())
+		slog.Error("error when creating response collection:" + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

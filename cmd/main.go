@@ -61,8 +61,8 @@ func main() {
 	chExit := make(chan struct{})
 	repo := pessoa.NewRepository(database.Connection, cache.Client)
 
-	for i := 0; i < 100; i++ {
-		go pessoa.Consume(repo.ChPessoas, chExit, repo, 100)
+	for i := 0; i < config.NumWorkers; i++ {
+		go pessoa.Consume(repo.ChPessoas, chExit, repo, config.NumBatch)
 	}
 
 	http.HandleFunc("/", route.Pessoas)
@@ -74,7 +74,7 @@ func main() {
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 	<-signalChan
 	close(repo.ChPessoas)
-	for i := 0; i < 100; i++ {
+	for i := 0; i < config.NumWorkers; i++ {
 		<-chExit
 	}
 }

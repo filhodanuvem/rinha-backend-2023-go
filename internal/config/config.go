@@ -1,10 +1,16 @@
 package config
 
-import "os"
+import (
+	"os"
+	"time"
+)
 
 var DatabaseURL string
 var CacheURL string
 var PROFILING bool
+var NumBatch = 1000
+var NumWorkers = 1000
+var WorkerTimeout = 1 * time.Second
 
 func init() {
 	DatabaseURL = envOrFatal("DATABASE_URL")

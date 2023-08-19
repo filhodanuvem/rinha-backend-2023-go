@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/filhodanuvem/rinha"
 	"github.com/filhodanuvem/rinha/internal/pessoa"
@@ -30,13 +31,6 @@ func CountPessoas(w http.ResponseWriter, r *http.Request) {
 }
 
 func Pessoas(w http.ResponseWriter, r *http.Request) {
-	if strings.Index(r.URL.Path, "/pessoas") != 0 &&
-		strings.Index(r.URL.Path, "/pessoas/") != 0 &&
-		strings.Index(r.URL.Path, "/count-pessoas") != 0 {
-
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
 	if r.Method == http.MethodPost && r.URL.Path == "/pessoas" {
 		PostPessoas(w, r)
 		return
@@ -47,13 +41,13 @@ func Pessoas(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.Method == http.MethodGet && r.URL.Path == "/count-pessoas" {
+	if r.Method == http.MethodGet && r.URL.Path == "/contagem-pessoas" {
 		CountPessoas(w, r)
 		return
 	}
 
 	w.Header().Set("Allow", "GET,POST")
-	w.WriteHeader(http.StatusMethodNotAllowed)
+	w.WriteHeader(http.StatusNotFound)
 }
 
 func PostPessoas(w http.ResponseWriter, r *http.Request) {
@@ -69,6 +63,12 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 		p.Nome == "" ||
 		p.Nascimento.IsZero() {
 		http.Error(w, "missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	if utf8.RuneCountInString(p.Apelido) > 32 ||
+		utf8.RuneCountInString(p.Nome) > 32 {
+		http.Error(w, "fields too long", http.StatusBadRequest)
 		return
 	}
 
@@ -151,15 +151,15 @@ func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
 }
 
 func GetPessoasByTermo(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
-	defer cancel()
-
 	termo := r.URL.Query().Get("t")
 	if termo == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte("missing required query param 't'"))
 		return
 	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
 
 	pessoas, err := pessoa.Repo.FindByTermo(ctx, termo)
 	if err != nil {

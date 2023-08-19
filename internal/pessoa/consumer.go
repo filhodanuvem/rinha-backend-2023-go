@@ -5,26 +5,27 @@ import (
 	"time"
 
 	"github.com/filhodanuvem/rinha"
+	"github.com/filhodanuvem/rinha/internal/config"
 )
 
-func Consume(chPessoas chan rinha.Pessoa, chExit chan struct{}, repo *Repository, limit int) {
-	slog.Info("Starting consumer...")
-	defer slog.Info("Finishing consumer...")
+func Consume(chPessoas chan rinha.Pessoa, chExit chan struct{}, repo *Repository, batch int) {
+	slog.Debug("Starting consumer...")
+	defer slog.Debug("Finishing consumer...")
 	i := 0
-	pessoas := make([]rinha.Pessoa, 0, limit)
-	tick := time.NewTicker(3 * time.Second)
+	pessoas := make([]rinha.Pessoa, 0, batch)
+	tick := time.NewTicker(config.WorkerTimeout)
 
 	for {
 		select {
 		case p, ok := <-chPessoas:
 			pessoas = append(pessoas, p)
 			i++
-			if i == limit || !ok {
+			if i == batch || !ok {
 				if err := repo.Insert(pessoas); err != nil {
 					slog.Error(err.Error())
 				}
 				i = 0
-				pessoas = make([]rinha.Pessoa, 0, limit)
+				pessoas = make([]rinha.Pessoa, 0, batch)
 			}
 
 			if !ok {
@@ -39,7 +40,7 @@ func Consume(chPessoas chan rinha.Pessoa, chExit chan struct{}, repo *Repository
 				}
 			}
 			i = 0
-			pessoas = make([]rinha.Pessoa, 0, limit)
+			pessoas = make([]rinha.Pessoa, 0, batch)
 		}
 	}
 }

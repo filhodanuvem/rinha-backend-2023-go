@@ -1,4 +1,4 @@
-ALTER SYSTEM SET max_connections = 500;
+ALTER SYSTEM SET max_connections = 1000;
 CREATE EXTENSION pg_trgm;
 
 create table if not exists pessoas(

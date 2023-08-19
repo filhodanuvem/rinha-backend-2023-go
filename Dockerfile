@@ -7,5 +7,6 @@ RUN go build -o rinha ./cmd/
 
 FROM alpine:3.18 as binary
 COPY --from=base /src/rinha .
+RUN mkdir /pprof
 EXPOSE 3000
 CMD ["./rinha"]

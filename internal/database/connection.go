@@ -15,3 +15,10 @@ func Connect() error {
 
 	return err
 }
+
+func Close() {
+	if Connection == nil {
+		return
+	}
+	Connection.Close()
+}

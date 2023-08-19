@@ -4,10 +4,12 @@ import "os"
 
 var DatabaseURL string
 var CacheURL string
+var PROFILING bool
 
 func init() {
 	DatabaseURL = envOrFatal("DATABASE_URL")
 	CacheURL = envOrFatal("CACHE_URL")
+	PROFILING = os.Getenv("PROFILING") == "true"
 }
 
 func envOrFatal(key string) string {

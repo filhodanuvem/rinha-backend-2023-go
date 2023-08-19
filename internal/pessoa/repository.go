@@ -3,6 +3,8 @@ package pessoa
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"log/slog"
@@ -21,30 +23,39 @@ type Repository struct {
 }
 
 func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
-	_, err := r.Conn.Exec(ctx, `
-		INSERT INTO pessoas (id, apelido, nome, nascimento, stack)
-		VALUES ($1, $2, $3, $4, $5)
-	`, pessoa.ID, pessoa.Apelido, pessoa.Nome, pessoa.Nascimento.Format(time.RFC3339), pessoa.Stack)
+	if v, _ := r.Cache.Get(ctx, pessoa.Apelido).Result(); v != "" {
+		return rinha.ErrApelidoJaExiste
+	}
 
-	if err == nil {
-		j, err := json.Marshal(pessoa)
+	go func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		index := fmt.Sprintf("%s %s %s", strings.ToLower(pessoa.Apelido), strings.ToLower(pessoa.Nome), strings.ToLower(strings.Join(pessoa.Stack, " ")))
+		_, err := r.Conn.Exec(ctx, `
+		INSERT INTO pessoas (id, apelido, nome, nascimento, stack, search_index)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, pessoa.ID, pessoa.Apelido, pessoa.Nome, pessoa.Nascimento.Format(time.RFC3339), pessoa.Stack, index)
+
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.ConstraintName == "pessoas_apelido_key" {
+			r.Cache.Set(ctx, pessoa.Apelido, "t", 0)
+			return
+		}
+
 		if err != nil {
 			slog.Error(err.Error())
 		}
-		go func() {
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancel()
-			if _, err := r.Cache.Set(ctx, pessoa.ID.String(), j, 60*time.Second).Result(); err != nil {
-				slog.Error(err.Error())
-			}
-		}()
+	}()
+
+	j, err := json.Marshal(pessoa)
+	if err != nil {
+		slog.Error(err.Error())
 	}
 
-	if pgerr, ok := err.(*pgconn.PgError); ok {
-		if pgerr.ConstraintName == "pessoas_apelido_key" {
-			return rinha.ErrApelidoJaExiste
-		}
+	if _, err := r.Cache.Set(ctx, pessoa.ID.String(), j, 24*time.Hour).Result(); err != nil {
+		slog.Error(err.Error())
 	}
+	r.Cache.Set(ctx, pessoa.Apelido, "t", 0)
 
 	return err
 }
@@ -82,6 +93,7 @@ func (r *Repository) FindOne(ctx context.Context, id uuid.UUID) (rinha.Pessoa, e
 		SELECT id, apelido, nome, nascimento, stack
 		FROM pessoas
 		WHERE id = $1
+		LIMIT 1x
 	`, id).Scan(&pessoa.ID, &pessoa.Apelido, &pessoa.Nome, &nascimento, &pessoa.Stack)
 
 	pessoa.Nascimento = rinha.Date{Time: nascimento}
@@ -97,15 +109,17 @@ func (r *Repository) FindByTermo(ctx context.Context, termo string) ([]rinha.Pes
 	pessoas := []rinha.Pessoa{}
 
 	rows, err := r.Conn.Query(ctx, `
-		SELECT id, apelido, nome, nascimento, stack
+		SELECT distinct id, apelido, nome, nascimento, stack
 		FROM pessoas
-		WHERE apelido LIKE '%' || $1 || '%' OR nome LIKE '%' || $1 || '%'
+		WHERE search_index LIKE '%' || $1 || '%'
 		LIMIT 50
 	`, termo)
 
 	if err != nil {
 		return pessoas, err
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var pessoa rinha.Pessoa

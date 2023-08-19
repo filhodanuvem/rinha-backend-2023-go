@@ -4,6 +4,8 @@ services:
     # image: api
     build: .
     hostname: api1
+    volumes:
+      - ./pprof/api1:/pprof
     restart: always
     depends_on:
       - db
@@ -16,13 +18,15 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.1'
           memory: '0.5GB'
 
   api2: # API - Instância 01
     # image: api
     build: .
     hostname: api2
+    volumes:
+      - ./pprof/api2:/pprof
     restart: always
     depends_on:
       - db
@@ -35,7 +39,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.1'
           memory: '0.5GB'
 
   nginx: # Load Balancer
@@ -50,7 +54,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.2'
           memory: '0.5GB'
 
   db: # Banco de dados
@@ -58,7 +62,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: '1.0'
           memory: '1.0GB'
     ports:
       - "5432:5432"
@@ -76,5 +80,5 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.1'
           memory: '0.5GB'

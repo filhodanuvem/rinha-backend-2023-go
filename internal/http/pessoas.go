@@ -19,7 +19,7 @@ import (
 func CountPessoas(w http.ResponseWriter, r *http.Request) {
 	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
 	count, err := repo.Count(ctx)
@@ -34,19 +34,30 @@ func CountPessoas(w http.ResponseWriter, r *http.Request) {
 }
 
 func Pessoas(w http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodPost {
+	if strings.Index(r.URL.Path, "/pessoas") != 0 &&
+		strings.Index(r.URL.Path, "/pessoas/") != 0 &&
+		strings.Index(r.URL.Path, "/count-pessoas") != 0 {
+
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	if r.Method == http.MethodPost && r.URL.Path == "/pessoas" {
 		PostPessoas(w, r)
 		return
 	}
 
-	if r.Method == http.MethodGet {
+	if r.Method == http.MethodGet && strings.Index(r.URL.Path, "/pessoas") == 0 {
 		GetPessoas(w, r)
+		return
+	}
+
+	if r.Method == http.MethodGet && r.URL.Path == "/count-pessoas" {
+		CountPessoas(w, r)
 		return
 	}
 
 	w.Header().Set("Allow", "GET,POST")
 	w.WriteHeader(http.StatusMethodNotAllowed)
-
 }
 
 func PostPessoas(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +80,7 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 
 	p.ID = uuid.New()
 
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 	if err := repo.Create(ctx, p); err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -114,7 +125,7 @@ func GetPessoas(w http.ResponseWriter, r *http.Request) {
 func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
 	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
 	id, err := uuid.Parse(param)
@@ -150,7 +161,7 @@ func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
 func GetPessoasByTermo(w http.ResponseWriter, r *http.Request) {
 	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
 	termo := r.URL.Query().Get("t")

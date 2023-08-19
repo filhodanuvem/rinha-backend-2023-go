@@ -15,6 +15,7 @@ import (
 	"github.com/filhodanuvem/rinha/internal/config"
 	"github.com/filhodanuvem/rinha/internal/database"
 	route "github.com/filhodanuvem/rinha/internal/http"
+	"github.com/filhodanuvem/rinha/internal/pessoa"
 )
 
 func main() {
@@ -57,7 +58,13 @@ func main() {
 		panic(err)
 	}
 
-	// http.HandleFunc("/pessoas/", route.Pessoas)
+	chExit := make(chan struct{})
+	repo := pessoa.NewRepository(database.Connection, cache.Client)
+
+	for i := 0; i < 100; i++ {
+		go pessoa.Consume(repo.ChPessoas, chExit, repo, 100)
+	}
+
 	http.HandleFunc("/", route.Pessoas)
 
 	slog.Info("Server running on port 80")
@@ -66,4 +73,8 @@ func main() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
 	<-signalChan
+	close(repo.ChPessoas)
+	for i := 0; i < 100; i++ {
+		<-chExit
+	}
 }

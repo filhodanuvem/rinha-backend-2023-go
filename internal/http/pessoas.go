@@ -10,19 +10,15 @@ import (
 	"time"
 
 	"github.com/filhodanuvem/rinha"
-	"github.com/filhodanuvem/rinha/internal/cache"
-	"github.com/filhodanuvem/rinha/internal/database"
 	"github.com/filhodanuvem/rinha/internal/pessoa"
 	"github.com/google/uuid"
 )
 
 func CountPessoas(w http.ResponseWriter, r *http.Request) {
-	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
-
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
-	count, err := repo.Count(ctx)
+	count, err := pessoa.Repo.Count(ctx)
 	if err != nil {
 		slog.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -61,8 +57,6 @@ func Pessoas(w http.ResponseWriter, r *http.Request) {
 }
 
 func PostPessoas(w http.ResponseWriter, r *http.Request) {
-	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
-
 	var p rinha.Pessoa
 	err := json.NewDecoder(r.Body).Decode(&p)
 	if err != nil {
@@ -82,7 +76,7 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	if err := repo.Create(ctx, p); err != nil {
+	if err := pessoa.Repo.Create(ctx, p); err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		if err == rinha.ErrApelidoJaExiste {
 			w.Write([]byte("apelido já existe"))
@@ -123,8 +117,6 @@ func GetPessoas(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
-	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
-
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
@@ -135,7 +127,7 @@ func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
 		return
 	}
 
-	pessoa, err := repo.FindOne(ctx, id)
+	pessoa, err := pessoa.Repo.FindOne(ctx, id)
 	if err != nil {
 		slog.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -159,8 +151,6 @@ func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
 }
 
 func GetPessoasByTermo(w http.ResponseWriter, r *http.Request) {
-	repo := pessoa.Repository{Conn: database.Connection, Cache: cache.Client}
-
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
 
@@ -171,7 +161,7 @@ func GetPessoasByTermo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pessoas, err := repo.FindByTermo(ctx, termo)
+	pessoas, err := pessoa.Repo.FindByTermo(ctx, termo)
 	if err != nil {
 		slog.Error("error when finding by t:" + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

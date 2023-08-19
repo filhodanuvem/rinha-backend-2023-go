@@ -18,8 +18,51 @@ import (
 )
 
 type Repository struct {
-	Conn  *pgxpool.Pool
-	Cache *redis.Client
+	Conn      *pgxpool.Pool
+	Cache     *redis.Client
+	ChPessoas chan rinha.Pessoa
+}
+
+var Repo *Repository
+
+func NewRepository(Conn *pgxpool.Pool, Cache *redis.Client) *Repository {
+	if Repo == nil {
+		Repo = &Repository{Conn: Conn, Cache: Cache, ChPessoas: make(chan rinha.Pessoa)}
+	}
+
+	return Repo
+}
+
+func (r *Repository) Insert(pessoas []rinha.Pessoa) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	params := make([]interface{}, 0, len(pessoas)*6)
+	values := ""
+	j := 0
+	for i, p := range pessoas {
+		index := fmt.Sprintf("%s %s %s", strings.ToLower(p.Apelido), strings.ToLower(p.Nome), strings.ToLower(strings.Join(p.Stack, " ")))
+		params = append(params, p.ID, p.Apelido, p.Nome, p.Nascimento.Format(time.RFC3339), p.Stack, index)
+
+		values += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d)", j+1, j+2, j+3, j+4, j+5, j+6)
+		if i != len(pessoas)-1 {
+			values += ","
+		}
+		j += 6
+	}
+
+	_, err := r.Conn.Exec(ctx, fmt.Sprintf(`
+		INSERT INTO pessoas (id, apelido, nome, nascimento, stack, search_index)
+		VALUES %s
+	`, values), params...)
+
+	if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.ConstraintName == "pessoas_apelido_key" {
+		// @TODO how to deal with conflicts on database
+		slog.Error("algum apelido ja existe")
+		return pgErr
+	}
+
+	return err
 }
 
 func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
@@ -27,25 +70,7 @@ func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
 		return rinha.ErrApelidoJaExiste
 	}
 
-	go func() {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		index := fmt.Sprintf("%s %s %s", strings.ToLower(pessoa.Apelido), strings.ToLower(pessoa.Nome), strings.ToLower(strings.Join(pessoa.Stack, " ")))
-		_, err := r.Conn.Exec(ctx, `
-		INSERT INTO pessoas (id, apelido, nome, nascimento, stack, search_index)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, pessoa.ID, pessoa.Apelido, pessoa.Nome, pessoa.Nascimento.Format(time.RFC3339), pessoa.Stack, index)
-
-		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.ConstraintName == "pessoas_apelido_key" {
-			r.Cache.Set(ctx, pessoa.Apelido, "t", 0)
-			return
-		}
-
-		if err != nil {
-			slog.Error(err.Error())
-		}
-	}()
+	r.ChPessoas <- pessoa
 
 	j, err := json.Marshal(pessoa)
 	if err != nil {

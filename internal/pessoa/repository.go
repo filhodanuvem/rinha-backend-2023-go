@@ -117,8 +117,8 @@ func (r *Repository) FindOne(ctx context.Context, id uuid.UUID) (rinha.Pessoa, e
 	err = r.Conn.QueryRow(ctx, `
 		SELECT id, apelido, nome, nascimento, stack
 		FROM pessoas
-		WHERE id = '$1'
-		LIMIT 1x
+		WHERE id = $1
+		LIMIT 1
 	`, id).Scan(&pessoa.ID, &pessoa.Apelido, &pessoa.Nome, &nascimento, &pessoa.Stack)
 
 	pessoa.Nascimento = rinha.Date{Time: nascimento}

@@ -158,7 +158,7 @@ func GetPessoasByTermo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 
 	pessoas, err := pessoa.Repo.FindByTermo(ctx, termo)

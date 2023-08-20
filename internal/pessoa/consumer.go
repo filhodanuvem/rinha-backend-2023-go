@@ -6,12 +6,11 @@ import (
 
 	"github.com/filhodanuvem/rinha"
 	"github.com/filhodanuvem/rinha/internal/config"
-	"github.com/google/uuid"
 )
 
 func Consume(chPessoas chan rinha.Pessoa, chExit chan struct{}, repo *Repository, batch int) {
 	slog.Debug("Starting consumer...")
-	defer slog.Info("Finishing consumer...")
+	defer slog.Debug("Finishing consumer...")
 	i := 0
 	pessoas := make([]rinha.Pessoa, 0, batch)
 	tick := time.NewTicker(config.WorkerTimeout)
@@ -19,9 +18,7 @@ func Consume(chPessoas chan rinha.Pessoa, chExit chan struct{}, repo *Repository
 	for {
 		select {
 		case p, ok := <-chPessoas:
-			if p.ID != uuid.Nil {
-				pessoas = append(pessoas, p)
-			}
+			pessoas = append(pessoas, p)
 			i++
 			if i == batch || !ok {
 				if err := repo.Insert(pessoas); err != nil {

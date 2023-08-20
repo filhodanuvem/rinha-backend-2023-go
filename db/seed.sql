@@ -1,5 +1,6 @@
 ALTER SYSTEM SET max_connections = 1000;
-ALTER DATABASE rinha SET synchronous_commit=OFF;
+CREATE EXTENSION pg_trgm;
+-- ALTER DATABASE rinha SET synchronous_commit=OFF;
 
 create table if not exists pessoas(
   id uuid not null primary key,
@@ -11,4 +12,4 @@ create table if not exists pessoas(
   created_at timestamp not null default current_timestamp
 );
 
-CREATE INDEX pessoas_search_index_idx ON pessoas (search_index);
+CREATE INDEX pessoas_search_index_idx ON pessoas USING gin (search_index gin_trgm_ops);

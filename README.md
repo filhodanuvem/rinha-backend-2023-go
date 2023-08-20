@@ -3,7 +3,9 @@
 Repositório de exemplo pro desafio da [Rinha de Backend 2023 Q3](https://github.com/zanfranceschi/rinha-de-backend-2023-q3)
 
 
-# GitHub Pages deploy
+# GitHub Actions + GitHub Pages deploy
+
+⚠️ Aconselho a deixar o repositório público antes de seguir esse tutorial, já que os testes demoram minutos pra rodar e o github impõe um limite de tempo de execução para repos privados, [leia mais aqui](https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration). 
 
 * Passo 1) Crie uma branch chamada "gh-pages" onde os assets do site vão ficar. Copie [esse arquivo](https://github.com/filhodanuvem/rinha-backend-2023-go/blob/gh-pages/.github/workflows/ci.yml) para essa branch como `.github/workflows/ci.yml`.  
 * Passo 2) Acessar a aba settings do seu repositório, no menu esquerda entrar em "Pages" e habilitar o Gihub Pages em "Build and deployment" com Source "Deploy from a branch" e selecione a branch `gh-pages` que acabou de criar. 

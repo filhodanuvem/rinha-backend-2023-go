@@ -11,12 +11,8 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@master
-      - name: Set up Go
-        uses: actions/setup-go@v3
-        with:
-          go-version-file: go.mod
       - name: Build
-        run: go build -v cmd/main.go
+        run: docker build . -t rinha-de-backend-2023-q3
   test:
     runs-on: ubuntu-20.04
     needs: build
@@ -38,7 +34,9 @@ jobs:
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ${{ github.workspace }}/rinha-de-backend-2023-q3/  
+        publish_dir: ${{ github.workspace }}/user-files/results/${{ env.GATLING_OUTPUT_FOLDER }}  
         destination_dir: ${{ env.GATLING_OUTPUT_FOLDER }}
+    - run: echo "FOLDER=${{ env.GATLING_OUTPUT_FOLDER }}" >> "${GITHUB_OUTPUT}"
+
         
     

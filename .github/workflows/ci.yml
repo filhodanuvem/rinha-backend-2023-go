@@ -39,7 +39,10 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ${{ github.workspace }}/rinha-de-backend-2023-q3/stress-test/user-files/results/${{ env.GATLING_OUTPUT_FOLDER }}  
         destination_dir: ${{ env.GATLING_OUTPUT_FOLDER }}
-    - run: echo "[Deploying to https://filhodanuvem.github.io/rinha-backend-2023-go/${{ env.GATLING_OUTPUT_FOLDER }}](https://filhodanuvem.github.io/rinha-backend-2023-go/${{ env.GATLING_OUTPUT_FOLDER }})" >> "${GITHUB_STEP_SUMMARY}"
+    - run: |
+        user=$(echo ${{ env.GITHUB_ACTION_REPOSITORY }} | cut -d "/" -f 1)
+        repo=$(echo ${{ env.GITHUB_ACTION_REPOSITORY }} | cut -d "/" -f 2)
+        echo "[Deploying to https:///${user}.github.io/${repo}/${{ env.GATLING_OUTPUT_FOLDER }}](https:///${user}.github.io/${repo}/${{ env.GATLING_OUTPUT_FOLDER }})" >> "${GITHUB_STEP_SUMMARY}"
 
         
     

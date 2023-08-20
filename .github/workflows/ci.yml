@@ -16,11 +16,14 @@ jobs:
   test:
     runs-on: ubuntu-20.04
     needs: build
+    permissions:
+      contents: write
     steps:
     - uses: actions/checkout@v3
     - run: docker-compose up -d
-    - run: |
-        git clone --single-branch https://github.com/zanfranceschi/rinha-de-backend-2023-q3
+    - name: Load test
+      run: |
+        git clone --single-branch --quite https://github.com/zanfranceschi/rinha-de-backend-2023-q3
         cd rinha-de-backend-2023-q3
         wget https://repo1.maven.org/maven2/io/gatling/highcharts/gatling-charts-highcharts-bundle/3.9.5/gatling-charts-highcharts-bundle-3.9.5-bundle.zip
         unzip gatling-charts-highcharts-bundle-3.9.5-bundle.zip
@@ -34,7 +37,7 @@ jobs:
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ${{ github.workspace }}/user-files/results/${{ env.GATLING_OUTPUT_FOLDER }}  
+        publish_dir: ${{ github.workspace }}/rinha-de-backend-2023-q3/stress-test/user-files/results/${{ env.GATLING_OUTPUT_FOLDER }}  
         destination_dir: ${{ env.GATLING_OUTPUT_FOLDER }}
     - run: echo "FOLDER=${{ env.GATLING_OUTPUT_FOLDER }}" >> "${GITHUB_OUTPUT}"
 

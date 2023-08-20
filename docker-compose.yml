@@ -71,11 +71,10 @@ services:
       POSTGRES_USER: rinha
     volumes:
       - ./db/seed.sql:/docker-entrypoint-initdb.d/init.sql
-  
   cache:
     hostname: cache
     image: redis:latest
-    command: redis-server --save "" --appendonly n
+    # command: redis-server --save "" --appendonly no
     ports:
       - '6379:6379'
     deploy:

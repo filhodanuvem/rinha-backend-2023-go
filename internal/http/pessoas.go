@@ -16,7 +16,7 @@ import (
 )
 
 func CountPessoas(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 
 	count, err := pessoa.Repo.Count(ctx)
@@ -74,7 +74,7 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 
 	p.ID = uuid.New()
 
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 	if err := pessoa.Repo.Create(ctx, p); err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -117,7 +117,7 @@ func GetPessoas(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 
 	id, err := uuid.Parse(param)
@@ -158,7 +158,7 @@ func GetPessoasByTermo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 
 	pessoas, err := pessoa.Repo.FindByTermo(ctx, termo)

@@ -39,7 +39,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ${{ github.workspace }}/rinha-de-backend-2023-q3/stress-test/user-files/results/${{ env.GATLING_OUTPUT_FOLDER }}  
         destination_dir: ${{ env.GATLING_OUTPUT_FOLDER }}
-    - run: echo "FOLDER=${{ env.GATLING_OUTPUT_FOLDER }}" >> "${GITHUB_OUTPUT}"
+    - run: echo "[Deploying to https://filhodanuvem.github.io/rinha-backend-2023-go/${{ env.GATLING_OUTPUT_FOLDER }}](https://filhodanuvem.github.io/rinha-backend-2023-go/${{ env.GATLING_OUTPUT_FOLDER }})" >> "${GITHUB_STEP_SUMMARY}"
 
         
     

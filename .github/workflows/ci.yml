@@ -31,6 +31,6 @@ jobs:
         cd gatling-charts-highcharts-bundle-3.9.5
         ./bin/gatling.sh -rm local -s RinhaBackendSimulation -rd "DESCRICAO" -rf $WORKSPACE/user-files/results -sf $WORKSPACE/user-files/simulations -rsf $WORKSPACE/user-files/resources
       env:
-        WORKSPACE: ${{ github.workspace }}/rinha-de-backend-2023-q3/gatling-charts-highcharts-bundle-3.9.5/stress-test
+        WORKSPACE: ${{ github.workspace }}/rinha-de-backend-2023-q3/stress-test
         
     

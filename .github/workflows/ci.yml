@@ -30,7 +30,15 @@ jobs:
         unzip gatling-charts-highcharts-bundle-3.9.5-bundle.zip
         cd gatling-charts-highcharts-bundle-3.9.5
         ./bin/gatling.sh -rm local -s RinhaBackendSimulation -rd "DESCRICAO" -rf $WORKSPACE/user-files/results -sf $WORKSPACE/user-files/simulations -rsf $WORKSPACE/user-files/resources
+        echo GATLING_OUTPUT_FOLDER=$(ls $WORKSPACE/user-files/results | sort | head -n 1) >> $GITHUB_ENV
       env:
         WORKSPACE: ${{ github.workspace }}/rinha-de-backend-2023-q3/stress-test
+    - run: echo ${{ env.GATLING_OUTPUT_FOLDER }}
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ${{ github.workspace }}/rinha-de-backend-2023-q3/  
+        destination_dir: ${{ env.GATLING_OUTPUT_FOLDER }}
         
     

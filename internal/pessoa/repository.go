@@ -34,8 +34,9 @@ func NewRepository(Conn *pgxpool.Pool, Cache *redis.Client) *Repository {
 }
 
 func (r *Repository) Insert(pessoas []rinha.Pessoa) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	if len(pessoas) == 0 {
+		return nil
+	}
 
 	params := make([]interface{}, 0, len(pessoas)*6)
 	values := ""
@@ -51,6 +52,8 @@ func (r *Repository) Insert(pessoas []rinha.Pessoa) error {
 		j += 6
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
 	_, err := r.Conn.Exec(ctx, fmt.Sprintf(`
 		INSERT INTO pessoas (id, apelido, nome, nascimento, stack, search_index)
 		VALUES %s
@@ -136,12 +139,12 @@ func (r *Repository) FindByTermo(ctx context.Context, termo string) ([]rinha.Pes
 	rows, err := r.Conn.Query(ctx, `
 		SELECT distinct id, apelido, nome, nascimento, stack
 		FROM pessoas
-		WHERE search_index LIKE '%' || $1 || '%'
+		WHERE search_index::tsvector @@ plainto_tsquery($1)
 		LIMIT 50
 	`, termo)
 
 	if err != nil {
-		return pessoas, err
+		return pessoas, fmt.Errorf("error on findByTermo: %w", err)
 	}
 
 	defer rows.Close()

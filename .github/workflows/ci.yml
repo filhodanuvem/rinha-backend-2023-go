@@ -20,6 +20,12 @@ jobs:
       contents: write
     steps:
     - uses: actions/checkout@v3
+    - run: |
+        echo "GH_USERNAME=$(echo $GITHUB_ACTION_REPOSITORY | cut -d "/" -f 1)" >> $GITHUB_ENV
+        echo "GH_REPO=$(echo $GITHUB_ACTION_REPOSITORY | cut -d "/" -f 2)" >> $GITHUB_ENV
+    - run: |
+        echo ${{ env.GH_REPO }}
+        echo ${{ env.GH_USERNAME }}
     - run: docker-compose up -d
     - name: Load test
       run: |
@@ -39,10 +45,7 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ${{ github.workspace }}/rinha-de-backend-2023-q3/stress-test/user-files/results/${{ env.GATLING_OUTPUT_FOLDER }}  
         destination_dir: ${{ env.GATLING_OUTPUT_FOLDER }}
-    - run: |
-        echo "GH_USERNAME=$(echo ${{ env.GITHUB_ACTION_REPOSITORY }} | cut -d "/" -f 1)" >> $GITHUB_ENV
-        echo "GH_REPO=$(echo ${{ env.GITHUB_ACTION_REPOSITORY }} | cut -d "/" -f 1)" >> $GITHUB_ENV
-        echo "[Deploying to https://${{ env.GH_USERNAME }}.github.io/${{ env.GH_REPO }}/${{ env.GATLING_OUTPUT_FOLDER }}](https://${{ env.GH_USERNAME }}.github.io/${{ env.GH_REPO }}/${{ env.GATLING_OUTPUT_FOLDER }})" >> "${GITHUB_STEP_SUMMARY}"
+    - run: echo "[Deploying to https://${{ env.GH_USERNAME }}.github.io/${{ env.GH_REPO }}/${{ env.GATLING_OUTPUT_FOLDER }}](https://${{ env.GH_USERNAME }}.github.io/${{ env.GH_REPO }}/${{ env.GATLING_OUTPUT_FOLDER }})" >> "${GITHUB_STEP_SUMMARY}"
 
         
     

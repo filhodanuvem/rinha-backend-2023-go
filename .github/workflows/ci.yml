@@ -40,7 +40,9 @@ jobs:
         publish_dir: ${{ github.workspace }}/rinha-de-backend-2023-q3/stress-test/user-files/results/${{ env.GATLING_OUTPUT_FOLDER }}  
         destination_dir: ${{ env.GATLING_OUTPUT_FOLDER }}
     - run: |
-        echo "[Deploying to https:///$(echo ${{ env.GITHUB_ACTION_REPOSITORY }} | cut -d "/" -f 1).github.io/$(echo ${{ env.GITHUB_ACTION_REPOSITORY }} | cut -d "/" -f 2)/${{ env.GATLING_OUTPUT_FOLDER }}](https:///$(echo ${{ env.GITHUB_ACTION_REPOSITORY }} | cut -d "/" -f 1).github.io/$(echo ${{ env.GITHUB_ACTION_REPOSITORY }} | cut -d "/" -f 2)/${{ env.GATLING_OUTPUT_FOLDER }})" >> "${GITHUB_STEP_SUMMARY}"
+        echo "GH_USERNAME=$(echo ${{ env.GITHUB_ACTION_REPOSITORY }} | cut -d "/" -f 1)" >> $GITHUB_ENV
+        echo "GH_REPO=$(echo ${{ env.GITHUB_ACTION_REPOSITORY }} | cut -d "/" -f 1)" >> $GITHUB_ENV
+        echo "[Deploying to https://${{ env.GH_USERNAME }}.github.io/${{ env.GH_REPO }}/${{ env.GATLING_OUTPUT_FOLDER }}](https://${{ env.GH_USERNAME }}.github.io/${{ env.GH_REPO }}/${{ env.GATLING_OUTPUT_FOLDER }})" >> "${GITHUB_STEP_SUMMARY}"
 
         
     

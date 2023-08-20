@@ -82,3 +82,5 @@ services:
         limits:
           cpus: '0.1'
           memory: '0.5GB'
+    volumes:
+       - ./redis.conf:/usr/local/etc/redis/redis.conf:ro

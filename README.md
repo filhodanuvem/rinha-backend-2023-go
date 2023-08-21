@@ -9,7 +9,7 @@ Repositório de exemplo pro desafio da [Rinha de Backend 2023 Q3](https://github
 
 * Passo 1) Crie uma branch chamada "gh-pages" onde os assets do site vão ficar. Copie [esse arquivo](https://github.com/filhodanuvem/rinha-backend-2023-go/blob/gh-pages/.github/workflows/ci.yml) para essa branch como `.github/workflows/ci.yml`.  
 * Passo 2) Acessar a aba settings do seu repositório, no menu esquerda entrar em "Pages" e habilitar o Gihub Pages em "Build and deployment" com Source "Deploy from a branch" e selecione a branch `gh-pages` que acabou de criar. 
-* Passo 3) Na sua branch `main` crie o arquivo `.github/workflows/ci.yml` e copie o conteúdo [desse arquivo](https://github.com/filhodanuvem/rinha-backend-2023-go/blob/161815533a4d525fa7e7e538511fd3131399497f/.github/workflows/ci.yml) para ele. 
+* Passo 3) Na sua branch `main` crie o arquivo `.github/workflows/ci.yml` e copie o conteúdo [desse arquivo](https://github.com/filhodanuvem/rinha-backend-2023-go/blob/b04b10c16e4f703b1a0f3c4fa6904a56351c85c7/.github/workflows/ci.yml) para ele. 
 
 Toda vez que você commitar na branch `main`, a pipeline vai tentar fazer um `docker build` como validação e então rodar os testes e fazer commit do report do gatling para branch `gh-pages`.
 

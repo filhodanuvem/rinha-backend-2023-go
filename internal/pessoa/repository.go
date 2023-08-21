@@ -136,7 +136,7 @@ func (r *Repository) FindByTermo(ctx context.Context, termo string) ([]rinha.Pes
 	rows, err := r.Conn.Query(ctx, `
 		SELECT distinct id, apelido, nome, nascimento, stack
 		FROM pessoas
-		WHERE search_index LIKE '%' || $1 || '%'
+		WHERE search_index ILIKE '%' || $1 || '%'
 		LIMIT 50
 	`, termo)
 

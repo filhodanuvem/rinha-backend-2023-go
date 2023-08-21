@@ -34,9 +34,9 @@ func NewRepository(Conn *pgxpool.Pool, Cache *redis.Client) *Repository {
 }
 
 func (r *Repository) Insert(pessoas []rinha.Pessoa) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
+	if len(pessoas) == 0 {
+		return nil
+	}
 	params := make([]interface{}, 0, len(pessoas)*6)
 	values := ""
 	j := 0
@@ -51,7 +51,7 @@ func (r *Repository) Insert(pessoas []rinha.Pessoa) error {
 		j += 6
 	}
 
-	_, err := r.Conn.Exec(ctx, fmt.Sprintf(`
+	_, err := r.Conn.Exec(context.Background(), fmt.Sprintf(`
 		INSERT INTO pessoas (id, apelido, nome, nascimento, stack, search_index)
 		VALUES %s
 	`, values), params...)

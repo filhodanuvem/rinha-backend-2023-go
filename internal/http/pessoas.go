@@ -58,6 +58,7 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "expected json body", http.StatusBadRequest)
 		return
 	}
+	defer r.Body.Close()
 
 	if p.Apelido == "" ||
 		p.Nome == "" ||
@@ -74,9 +75,7 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 
 	p.ID = uuid.New()
 
-	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
-	defer cancel()
-	if err := pessoa.Repo.Create(ctx, p); err != nil {
+	if err := pessoa.Repo.Create(r.Context(), p); err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		if err == rinha.ErrApelidoJaExiste {
 			w.Write([]byte("apelido já existe"))
@@ -117,9 +116,6 @@ func GetPessoas(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
-	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
-	defer cancel()
-
 	id, err := uuid.Parse(param)
 	if err != nil {
 		slog.Debug(err.Error())
@@ -127,7 +123,7 @@ func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
 		return
 	}
 
-	pessoa, err := pessoa.Repo.FindOne(ctx, id)
+	pessoa, err := pessoa.Repo.FindOne(r.Context(), id)
 	if err != nil {
 		slog.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -158,10 +154,7 @@ func GetPessoasByTermo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
-	defer cancel()
-
-	pessoas, err := pessoa.Repo.FindByTermo(ctx, termo)
+	pessoas, err := pessoa.Repo.FindByTermo(r.Context(), termo)
 	if err != nil {
 		slog.Error("error when finding by t:" + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

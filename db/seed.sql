@@ -1,6 +1,8 @@
 ALTER SYSTEM SET max_connections = 1000;
 CREATE EXTENSION pg_trgm;
 -- ALTER DATABASE rinha SET synchronous_commit=OFF;
+ALTER SYSTEM SET shared_buffers TO "1024MB";
+
 
 create table if not exists pessoas(
   id uuid not null primary key,

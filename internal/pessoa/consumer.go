@@ -6,6 +6,7 @@ import (
 
 	"github.com/filhodanuvem/rinha"
 	"github.com/filhodanuvem/rinha/internal/config"
+	"github.com/google/uuid"
 )
 
 func Consume(chPessoas chan rinha.Pessoa, chExit chan struct{}, repo *Repository, batch int) {
@@ -18,8 +19,9 @@ func Consume(chPessoas chan rinha.Pessoa, chExit chan struct{}, repo *Repository
 	for {
 		select {
 		case p, ok := <-chPessoas:
-			pessoas = append(pessoas, p)
-			i++
+			if p.ID != uuid.Nil {
+				pessoas = append(pessoas, p)
+			}
 			if i == batch || !ok {
 				if err := repo.Insert(pessoas); err != nil {
 					slog.Error(err.Error())
@@ -27,6 +29,7 @@ func Consume(chPessoas chan rinha.Pessoa, chExit chan struct{}, repo *Repository
 				i = 0
 				pessoas = make([]rinha.Pessoa, 0, batch)
 			}
+			i++
 
 			if !ok {
 				chExit <- struct{}{}

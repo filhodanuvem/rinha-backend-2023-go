@@ -74,7 +74,7 @@ services:
   cache:
     hostname: cache
     image: redis:latest
-    # command: redis-server --save "" --appendonly no
+    command: redis-server --save "" --appendonly no
     ports:
       - '6379:6379'
     deploy:

@@ -9,9 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func Consume(chPessoas chan rinha.Pessoa, chExit chan struct{}, repo *Repository, batch int) {
-	slog.Debug("Starting consumer...")
-	defer slog.Debug("Finishing consumer...")
+func RunWorker(chPessoas chan rinha.Pessoa, chExit chan struct{}, repo *Repository, batch int) {
+	slog.Debug("Starting worker...")
+	defer slog.Debug("Finishing worker...")
 	i := 0
 	pessoas := make([]rinha.Pessoa, 0, batch)
 	tick := time.NewTicker(config.WorkerTimeout)

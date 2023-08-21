@@ -62,7 +62,7 @@ func main() {
 	repo := pessoa.NewRepository(database.Connection, cache.Client)
 
 	for i := 0; i < config.NumWorkers; i++ {
-		go pessoa.Consume(repo.ChPessoas, chExit, repo, config.NumBatch)
+		go pessoa.RunWorker(repo.ChPessoas, chExit, repo, config.NumBatch)
 	}
 
 	http.HandleFunc("/", route.Pessoas)

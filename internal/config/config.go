@@ -8,8 +8,8 @@ import (
 var DatabaseURL string
 var CacheURL string
 var PROFILING bool
-var NumBatch = 1000
-var NumWorkers = 1000
+var NumBatch = 100
+var NumWorkers = 200
 var WorkerTimeout = 1 * time.Second
 
 func init() {

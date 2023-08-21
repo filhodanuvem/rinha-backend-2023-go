@@ -15,10 +15,8 @@ import (
 	"github.com/google/uuid"
 )
 
-const defaultTimeout = 15 * time.Second
-
 func CountPessoas(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
 
 	count, err := pessoa.Repo.Count(ctx)
@@ -70,16 +68,14 @@ func PostPessoas(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if utf8.RuneCountInString(p.Apelido) > 32 ||
-		utf8.RuneCountInString(p.Nome) > 100 {
+		utf8.RuneCountInString(p.Nome) > 32 {
 		http.Error(w, "fields too long", http.StatusBadRequest)
 		return
 	}
 
 	p.ID = uuid.New()
 
-	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
-	defer cancel()
-	if err := pessoa.Repo.Create(ctx, p); err != nil {
+	if err := pessoa.Repo.Create(r.Context(), p); err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		if err == rinha.ErrApelidoJaExiste {
 			w.Write([]byte("apelido já existe"))
@@ -127,9 +123,7 @@ func GetPessoaByID(w http.ResponseWriter, r *http.Request, param string) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
-	defer cancel()
-	pessoa, err := pessoa.Repo.FindOne(ctx, id)
+	pessoa, err := pessoa.Repo.FindOne(r.Context(), id)
 	if err != nil {
 		slog.Error(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
@@ -160,9 +154,7 @@ func GetPessoasByTermo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx, cancel := context.WithTimeout(r.Context(), defaultTimeout)
-	defer cancel()
-	pessoas, err := pessoa.Repo.FindByTermo(ctx, termo)
+	pessoas, err := pessoa.Repo.FindByTermo(r.Context(), termo)
 	if err != nil {
 		slog.Error("error when finding by t:" + err.Error())
 		w.WriteHeader(http.StatusInternalServerError)

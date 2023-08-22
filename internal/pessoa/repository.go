@@ -130,7 +130,7 @@ func (r *Repository) FindOne(ctx context.Context, id uuid.UUID) (rinha.Pessoa, e
 	return pessoa, err
 }
 
-func (r *Repository) FindByTermo(ctx context.Context, termo string) ([]rinha.Pessoa, error) {
+func (r *Repository) FindByTermo(ctx context.Context, t string) ([]rinha.Pessoa, error) {
 	pessoas := []rinha.Pessoa{}
 
 	rows, err := r.Conn.Query(ctx, `
@@ -138,7 +138,7 @@ func (r *Repository) FindByTermo(ctx context.Context, termo string) ([]rinha.Pes
 		FROM pessoas
 		WHERE search_index ILIKE '%' || $1 || '%'
 		LIMIT 50
-	`, termo)
+	`, strings.ToLower(t))
 
 	if err != nil {
 		return pessoas, err

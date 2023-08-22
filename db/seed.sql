@@ -1,7 +1,19 @@
 ALTER SYSTEM SET max_connections = 1000;
+
+-- Use an extension to enable trigram similarity search and improve LIKE performance
+-- https://www.postgresql.org/docs/current/runtime-config-connection.htmlhttps://mazeez.dev/posts/pg-trgm-similarity-search-and-fast-like
 CREATE EXTENSION pg_trgm;
+
 ALTER DATABASE rinha SET synchronous_commit=OFF;
+-- using 25% of memory as suggested in the docs:
+--    https://www.postgresql.org/docs/9.1/runtime-config-resource.html
 ALTER SYSTEM SET shared_buffers TO "425MB";
+
+-- debug slow queries, run \d pg_stat_statements
+-- docs: 
+--    https://www.postgresql.org/docs/current/pgstatstatements.html
+-- CREATE EXTENSION pg_stat_statements;
+-- ALTER SYSTEM SET shared_preload_libraries = 'pg_stat_statements';
 
 
 create table if not exists pessoas(

@@ -13,7 +13,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.1'
           memory: '0.5GB'
 
   api2: # API - Instância 01
@@ -29,7 +29,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.1'
           memory: '0.5GB'
 
   nginx: # Load Balancer
@@ -52,7 +52,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.75'
+          cpus: '1.05'
           memory: '1.5GB'
     environment:
       POSTGRES_PASSWORD: tw1tt3r

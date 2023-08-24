@@ -11,6 +11,7 @@ import (
 	"runtime/pprof"
 	"runtime/trace"
 
+	"github.com/filhodanuvem/rinha/internal/cache"
 	"github.com/filhodanuvem/rinha/internal/config"
 	"github.com/filhodanuvem/rinha/internal/database"
 	route "github.com/filhodanuvem/rinha/internal/http"
@@ -53,7 +54,16 @@ func main() {
 	}
 	defer database.Close()
 
-	pessoa.NewRepository(database.Connection)
+	if err := cache.Connect(); err != nil {
+		panic(err)
+	}
+
+	chExit := make(chan struct{})
+	repo := pessoa.NewRepository(database.Connection, cache.Client)
+
+	for i := 0; i < config.NumWorkers; i++ {
+		go pessoa.RunWorker(repo.ChPessoas, chExit, repo, config.NumBatch)
+	}
 
 	http.HandleFunc("/", route.Pessoas)
 

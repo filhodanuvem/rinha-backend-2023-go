@@ -28,14 +28,12 @@ jobs:
         wget https://repo1.maven.org/maven2/io/gatling/highcharts/gatling-charts-highcharts-bundle/3.9.5/gatling-charts-highcharts-bundle-3.9.5-bundle.zip
         unzip gatling-charts-highcharts-bundle-3.9.5-bundle.zip
         cd gatling-charts-highcharts-bundle-3.9.5
-        ./bin/gatling.sh -rm local -s RinhaBackendSimulation -rd "DESCRICAO" -rf $WORKSPACE/user-files/results -sf $WORKSPACE/user-files/simulations -rsf $WORKSPACE/user-files/resources
+        ./bin/gatling.sh -rm local -s RinhaBackendSimulation -rd "${{ github.sha }}" -rf $WORKSPACE/user-files/results -sf $WORKSPACE/user-files/simulations -rsf $WORKSPACE/user-files/resources
         echo GATLING_OUTPUT_FOLDER=$(ls $WORKSPACE/user-files/results | sort | head -n 1) >> $GITHUB_ENV
       env:
         WORKSPACE: ${{ github.workspace }}/rinha-de-backend-2023-q3/stress-test
-    - run: echo ${{ env.GATLING_OUTPUT_FOLDER }}
-    - run: |
-        # replace string DESCRICAO with the commit sha in file index.html inside GATLING OUTPUT FOLDER
-        sed -i "s/DESCRICAO/${{ github.sha }}/g" ${{ github.workspace }}/rinha-de-backend-2023-q3/stress-test/user-files/results/${{ env.GATLING_OUTPUT_FOLDER }}/index.html
+    - run: docker-compose ps
+    - run: docker-compose logs
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:

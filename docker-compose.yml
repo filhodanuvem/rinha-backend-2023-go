@@ -6,15 +6,17 @@ services:
     hostname: api1
     depends_on:
       - db
+      - cache
     expose:
       - "80"
     environment:
       DATABASE_URL: postgres://rinha:tw1tt3r@db:5432/rinha
+      CACHE_URL: cache:6379
     deploy:
       resources:
         limits:
           cpus: '0.1'
-          memory: '0.5GB'
+          memory: '0.25GB'
 
   api2: # API - Instância 01
     # image: api
@@ -22,15 +24,17 @@ services:
     hostname: api2
     depends_on:
       - db
+      - cache
     expose:
       - "80"
     environment:
       DATABASE_URL: postgres://rinha:tw1tt3r@db:5432/rinha
+      CACHE_URL: cache:6379
     deploy:
       resources:
         limits:
           cpus: '0.1'
-          memory: '0.5GB'
+          memory: '0.25GB'
 
   nginx: # Load Balancer
     image: nginx:latest
@@ -44,7 +48,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.2'
           memory: '0.5GB'
 
   db: # Banco de dados
@@ -52,10 +56,21 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.05'
+          cpus: '1.0'
           memory: '1.5GB'
     environment:
       POSTGRES_PASSWORD: tw1tt3r
       POSTGRES_USER: rinha
     volumes:
       - ./db/seed.sql:/docker-entrypoint-initdb.d/init.sql
+  cache:
+    hostname: cache
+    image: redis:latest
+    command: redis-server --save "" --appendonly no
+    ports:
+      - '6379:6379'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: '0.5GB'

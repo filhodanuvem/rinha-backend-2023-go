@@ -6,6 +6,7 @@ import (
 )
 
 var DatabaseURL string
+var CacheURL string
 var PROFILING bool
 var NumBatch = 100
 var NumWorkers = 10
@@ -13,6 +14,7 @@ var WorkerTimeout = 500 * time.Millisecond
 
 func init() {
 	DatabaseURL = envOrFatal("DATABASE_URL")
+	CacheURL = envOrFatal("CACHE_URL")
 	PROFILING = os.Getenv("PROFILING") == "true"
 }
 

@@ -8,8 +8,8 @@ import (
 var DatabaseURL string
 var PROFILING bool
 var NumBatch = 100
-var NumWorkers = 100
-var WorkerTimeout = 1 * time.Second
+var NumWorkers = 10
+var WorkerTimeout = 500 * time.Millisecond
 
 func init() {
 	DatabaseURL = envOrFatal("DATABASE_URL")

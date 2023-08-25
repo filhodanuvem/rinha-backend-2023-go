@@ -2,6 +2,7 @@ package pessoa
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -29,10 +30,11 @@ func NewRepository(Conn *pgxpool.Pool) *Repository {
 }
 
 func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
+	index := fmt.Sprintf("%s %s %s", strings.ToLower(pessoa.Apelido), strings.ToLower(pessoa.Nome), strings.ToLower(strings.Join(pessoa.Stack, " ")))
 	_, err := r.Conn.Exec(ctx, `
-		INSERT INTO pessoas (id, apelido, nome, nascimento, stack)
-		VALUES ($1, $2, $3, $4, $5)
-	`, pessoa.ID, pessoa.Apelido, pessoa.Nome, pessoa.Nascimento.Format(time.RFC3339), pessoa.Stack)
+		INSERT INTO pessoas (id, apelido, nome, nascimento, stack, search_index)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, pessoa.ID, pessoa.Apelido, pessoa.Nome, pessoa.Nascimento.Format(time.RFC3339), pessoa.Stack, index)
 
 	if pgerr, ok := err.(*pgconn.PgError); ok {
 		if pgerr.ConstraintName == "pessoas_apelido_key" {
@@ -80,8 +82,7 @@ func (r *Repository) FindByTermo(ctx context.Context, t string) ([]rinha.Pessoa,
 	rows, err := r.Conn.Query(ctx, `
 		SELECT distinct id, apelido, nome, nascimento, stack
 		FROM pessoas
-		WHERE apelido ILIKE '%' || $1 || '%' OR 
-			nome ILIKE '%' || $1 || '%'
+		WHERE search_index ILIKE '%' || $1 || '%'
 		LIMIT 50
 	`, strings.ToLower(t))
 

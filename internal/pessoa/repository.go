@@ -18,15 +18,16 @@ import (
 )
 
 type Repository struct {
-	Conn  *pgxpool.Pool
-	Cache *redis.Client
+	Conn      *pgxpool.Pool
+	Cache     *redis.Client
+	ChPessoas chan rinha.Pessoa
 }
 
 var Repo *Repository
 
 func NewRepository(Conn *pgxpool.Pool, rds *redis.Client) *Repository {
 	if Repo == nil {
-		Repo = &Repository{Conn: Conn, Cache: rds}
+		Repo = &Repository{Conn: Conn, Cache: rds, ChPessoas: make(chan rinha.Pessoa)}
 	}
 
 	return Repo
@@ -50,21 +51,39 @@ func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
 		return err
 	}
 
-	go func() {
-		index := fmt.Sprintf("%s %s %s", strings.ToLower(pessoa.Apelido), strings.ToLower(pessoa.Nome), strings.ToLower(strings.Join(pessoa.Stack, " ")))
-		_, err := r.Conn.Exec(ctx, `
-		INSERT INTO pessoas (id, apelido, nome, nascimento, stack, search_index)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, pessoa.ID, pessoa.Apelido, pessoa.Nome, pessoa.Nascimento.Format(time.RFC3339), pessoa.Stack, index)
-
-		if pgerr, ok := err.(*pgconn.PgError); ok {
-			if pgerr.ConstraintName == "pessoas_apelido_key" {
-				slog.Error(pgerr.Error())
-			}
-		}
-	}()
+	r.ChPessoas <- pessoa
 
 	return nil
+}
+
+func (r *Repository) Insert(pessoas []rinha.Pessoa) error {
+	if len(pessoas) == 0 {
+		return nil
+	}
+	// bulk := make([][]any, 0, len(pessoas))
+	// for _, p := range pessoas {
+
+	// 	bulk = append(bulk, []any{p.ID, p.Apelido, p.Nome, p.Nascimento.Time, p.Stack, index})
+	// }
+
+	_, err := r.Conn.CopyFrom(
+		context.Background(),
+		pgx.Identifier{"pessoas"},
+		[]string{"id", "apelido", "nome", "nascimento", "stack", "search_index"},
+		pgx.CopyFromSlice(len(pessoas), func(i int) ([]any, error) {
+			p := pessoas[i]
+			index := fmt.Sprintf("%s %s %s", strings.ToLower(p.Apelido), strings.ToLower(p.Nome), strings.ToLower(strings.Join(p.Stack, " ")))
+			return []any{p.ID, p.Apelido, p.Nome, p.Nascimento.Time, p.Stack, index}, nil
+		}),
+	)
+
+	if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.ConstraintName == "pessoas_apelido_key" {
+		// @TODO how to deal with conflicts on database
+		slog.Error("algum apelido ja existe")
+		return pgErr
+	}
+
+	return err
 }
 
 func (r *Repository) Count(ctx context.Context) (int, error) {
@@ -116,7 +135,7 @@ func (r *Repository) FindByTermo(ctx context.Context, t string) ([]rinha.Pessoa,
 	pessoas := []rinha.Pessoa{}
 
 	rows, err := r.Conn.Query(ctx, `
-		SELECT distinct id, apelido, nome, nascimento, stack
+		SELECT id, apelido, nome, nascimento, stack
 		FROM pessoas
 		WHERE search_index ILIKE '%' || $1 || '%'
 		LIMIT 50

@@ -15,8 +15,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.1'
-          memory: '0.25GB'
+          cpus: '0.01'
+          memory: '0.15GB'
 
   api2: # API - Instância 01
     # image: api
@@ -33,8 +33,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.1'
-          memory: '0.25GB'
+          cpus: '0.01'
+          memory: '0.15GB'
 
   nginx: # Load Balancer
     image: nginx:latest
@@ -48,7 +48,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.2'
+          cpus: '0.1'
           memory: '0.5GB'
 
   db: # Banco de dados
@@ -56,13 +56,17 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
-          memory: '1.5GB'
+          cpus: '1.28'
+          memory: '1.7GB'
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_PASSWORD: tw1tt3r
       POSTGRES_USER: rinha
+    command: "postgres -c config_file=/usr/local/etc/postgres/postgres.conf"
     volumes:
-      - ./db/seed.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./postgres.conf:/usr/local/etc/postgres/postgres.conf
   cache:
     hostname: cache
     image: redis:latest

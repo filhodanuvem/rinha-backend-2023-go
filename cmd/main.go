@@ -58,7 +58,12 @@ func main() {
 		panic(err)
 	}
 
-	pessoa.NewRepository(database.Connection, cache.Client)
+	chExit := make(chan struct{})
+	repo := pessoa.NewRepository(database.Connection, cache.Client)
+
+	for i := 0; i < config.NumWorkers; i++ {
+		go pessoa.RunWorker(repo.ChPessoas, chExit, repo, config.NumBatch)
+	}
 
 	http.HandleFunc("/", route.Pessoas)
 

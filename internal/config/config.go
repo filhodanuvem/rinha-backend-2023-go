@@ -9,7 +9,7 @@ import (
 var DatabaseURL string
 var CacheURL string
 var PROFILING bool
-var NumBatch = 1000
+var NumBatch = 10000
 var NumWorkers = 1
 var WorkerTimeout = 2 * time.Second
 

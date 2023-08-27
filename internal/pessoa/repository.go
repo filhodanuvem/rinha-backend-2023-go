@@ -33,54 +33,55 @@ func NewRepository(Conn *pgxpool.Pool, Cache *redis.Client) *Repository {
 	return Repo
 }
 
+func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
+	if v, _ := r.Cache.Get(ctx, pessoa.Apelido).Result(); v != "" {
+		return rinha.ErrApelidoJaExiste
+	}
+
+	j, err := json.Marshal(pessoa)
+	if err != nil {
+		return err
+	}
+
+	pipe := r.Cache.Pipeline()
+	pipe.Set(ctx, pessoa.Apelido, "t", 0)
+	pipe.Set(ctx, pessoa.ID.String(), j, 24*time.Hour)
+	if _, err := pipe.Exec(ctx); err != nil {
+		slog.Error(err.Error())
+		return err
+	}
+
+	r.ChPessoas <- pessoa
+
+	return nil
+}
+
 func (r *Repository) Insert(pessoas []rinha.Pessoa) error {
 	if len(pessoas) == 0 {
 		return nil
 	}
-	params := make([]interface{}, 0, len(pessoas)*6)
-	values := ""
-	j := 0
-	for i, p := range pessoas {
-		index := fmt.Sprintf("%s %s %s", strings.ToLower(p.Apelido), strings.ToLower(p.Nome), strings.ToLower(strings.Join(p.Stack, " ")))
-		params = append(params, p.ID, p.Apelido, p.Nome, p.Nascimento.Format(time.RFC3339), p.Stack, index)
+	// bulk := make([][]any, 0, len(pessoas))
+	// for _, p := range pessoas {
 
-		values += fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d)", j+1, j+2, j+3, j+4, j+5, j+6)
-		if i != len(pessoas)-1 {
-			values += ","
-		}
-		j += 6
-	}
+	// 	bulk = append(bulk, []any{p.ID, p.Apelido, p.Nome, p.Nascimento.Time, p.Stack, index})
+	// }
 
-	_, err := r.Conn.Exec(context.Background(), fmt.Sprintf(`
-		INSERT INTO pessoas (id, apelido, nome, nascimento, stack, search_index)
-		VALUES %s
-	`, values), params...)
+	_, err := r.Conn.CopyFrom(
+		context.Background(),
+		pgx.Identifier{"pessoas"},
+		[]string{"id", "apelido", "nome", "nascimento", "stack", "search_index"},
+		pgx.CopyFromSlice(len(pessoas), func(i int) ([]any, error) {
+			p := pessoas[i]
+			index := fmt.Sprintf("%s %s %s", strings.ToLower(p.Apelido), strings.ToLower(p.Nome), strings.ToLower(strings.Join(p.Stack, " ")))
+			return []any{p.ID, p.Apelido, p.Nome, p.Nascimento.Time, p.Stack, index}, nil
+		}),
+	)
 
 	if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.ConstraintName == "pessoas_apelido_key" {
 		// @TODO how to deal with conflicts on database
 		slog.Error("algum apelido ja existe")
 		return pgErr
 	}
-
-	return err
-}
-
-func (r *Repository) Create(ctx context.Context, pessoa rinha.Pessoa) error {
-	if v, _ := r.Cache.Get(ctx, pessoa.Apelido).Result(); v != "" {
-		return rinha.ErrApelidoJaExiste
-	}
-
-	r.ChPessoas <- pessoa
-
-	j, err := json.Marshal(pessoa)
-	if err != nil {
-		slog.Error(err.Error())
-	}
-
-	if _, err := r.Cache.Set(ctx, pessoa.ID.String(), j, 24*time.Hour).Result(); err != nil {
-		slog.Error(err.Error())
-	}
-	r.Cache.Set(ctx, pessoa.Apelido, "t", 0)
 
 	return err
 }
@@ -100,7 +101,7 @@ func (r *Repository) FindOne(ctx context.Context, id uuid.UUID) (rinha.Pessoa, e
 	var pessoa rinha.Pessoa
 
 	entry, err := r.Cache.Get(ctx, id.String()).Result()
-	if err != nil {
+	if err != nil && err != redis.Nil {
 		slog.Error(err.Error())
 	}
 
@@ -134,7 +135,7 @@ func (r *Repository) FindByTermo(ctx context.Context, t string) ([]rinha.Pessoa,
 	pessoas := []rinha.Pessoa{}
 
 	rows, err := r.Conn.Query(ctx, `
-		SELECT distinct id, apelido, nome, nascimento, stack
+		SELECT id, apelido, nome, nascimento, stack
 		FROM pessoas
 		WHERE search_index ILIKE '%' || $1 || '%'
 		LIMIT 50

@@ -60,11 +60,6 @@ func (r *Repository) Insert(pessoas []rinha.Pessoa) error {
 	if len(pessoas) == 0 {
 		return nil
 	}
-	// bulk := make([][]any, 0, len(pessoas))
-	// for _, p := range pessoas {
-
-	// 	bulk = append(bulk, []any{p.ID, p.Apelido, p.Nome, p.Nascimento.Time, p.Stack, index})
-	// }
 
 	_, err := r.Conn.CopyFrom(
 		context.Background(),

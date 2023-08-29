@@ -1,4 +1,4 @@
-ALTER SYSTEM SET max_connections = 1000;
+ALTER SYSTEM SET max_connections = 300;
 
 -- Use an extension to enable trigram similarity search and improve LIKE performance
 -- https://www.postgresql.org/docs/current/runtime-config-connection.htmlhttps://mazeez.dev/posts/pg-trgm-similarity-search-and-fast-like

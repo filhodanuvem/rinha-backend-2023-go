@@ -11,10 +11,10 @@ var CacheURL string
 var PROFILING bool
 var NumBatch = 1000
 var NumWorkers = 1
-var WorkerTimeout = 4 * time.Second
+var WorkerTimeout = 1 * time.Second
 
 func init() {
-	NumWorkers = runtime.GOMAXPROCS(0) * 10
+	NumWorkers = runtime.GOMAXPROCS(0) * 2
 	DatabaseURL = envOrFatal("DATABASE_URL")
 	CacheURL = envOrFatal("CACHE_URL")
 	PROFILING = os.Getenv("PROFILING") == "true"

@@ -33,6 +33,7 @@ jobs:
         echo GATLING_OUTPUT_FOLDER=$(ls $WORKSPACE/user-files/results | sort | head -n 1) >> $GITHUB_ENV
       env:
         WORKSPACE: ${{ github.workspace }}/rinha-de-backend-2023-q3/stress-test
+    - run: echo "contagem de pessoas -> $(curl -v 'http://localhost:9999/contagem-pessoas')" >> "${GITHUB_STEP_SUMMARY}"
     - run: docker-compose ps
     - run: docker-compose logs
     - name: Deploy

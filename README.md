@@ -2,6 +2,9 @@
 
 Repositório de exemplo pro desafio da [Rinha de Backend 2023 Q3](https://github.com/zanfranceschi/rinha-de-backend-2023-q3)
 
+📹 Eu documentei passo a passo como cheguei nessa solução num vídeo do YouTube:
+https://youtu.be/Z4KNilvx8Pk
+
 
 # GitHub Actions + GitHub Pages deploy
 

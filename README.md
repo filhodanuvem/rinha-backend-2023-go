@@ -7,9 +7,9 @@ https://youtu.be/Z4KNilvx8Pk
 
 ## Próximo Passo
 
-Depois da Rinha, que tal estudar com outros tipos de desafios com solução? Acesse [devgym.com.br](https://devgym.com.br?utm_campaign=rinhaback&utm_medium=social&utm_source=github). 
+Depois da Rinha, que tal estudar com outros tipos de desafios com solução? Acesse [devgym.com.br](https://app.devgym.com.br?utm_campaign=rinhaback&utm_medium=social&utm_source=github). 
 
-[![](https://raw.githubusercontent.com/devgymbr/files/main/devgymblack.png)](https://devgym.com.br?utm_campaign=rinhaback&utm_medium=social&utm_source=github)
+[![](https://raw.githubusercontent.com/devgymbr/files/main/devgymblack.png)](https://app.devgym.com.br?utm_campaign=rinhaback&utm_medium=social&utm_source=github)
 
 ## GitHub Actions + GitHub Pages deploy
 

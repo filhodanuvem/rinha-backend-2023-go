@@ -5,13 +5,13 @@ Repositório de exemplo pro desafio da [Rinha de Backend 2023 Q3](https://github
 📹 Eu documentei passo a passo como cheguei nessa solução num vídeo do YouTube:
 https://youtu.be/Z4KNilvx8Pk
 
-# Próximo Passo
+## Próximo Passo
 
 Depois da Rinha, que tal estudar com outros tipos de desafios com solução? Acesse [devgym.com.br](https://devgym.com.br?utm_campaign=rinhaback&utm_medium=social&utm_source=github). 
 
 [![](https://raw.githubusercontent.com/devgymbr/files/main/devgymblack.png)](https://devgym.com.br?utm_campaign=rinhaback&utm_medium=social&utm_source=github)
 
-# GitHub Actions + GitHub Pages deploy
+## GitHub Actions + GitHub Pages deploy
 
 ⚠️ Aconselho a deixar o repositório público antes de seguir esse tutorial, já que os testes demoram minutos pra rodar e o github impõe um limite de tempo de execução para repos privados, [leia mais aqui](https://docs.github.com/en/actions/learn-github-actions/usage-limits-billing-and-administration). 
 
